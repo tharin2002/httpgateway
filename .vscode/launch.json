@@ -2,7 +2,26 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Client (Mono)",
+      "name": "Launch Server",
+      "type": "mono",
+      "request": "launch",
+      "preLaunchTask": "build (Debug)",
+      "program": "${env:VINTAGE_STORY}/VintagestoryServer.exe",
+      "args": [
+        "--dataPath",
+        "/Users/anthony/dev/data",
+        "--playstyle",
+        "surviveandbuild",
+        "--openWorld",
+        "modding test world",
+        "--addOrigin",
+        "${workspaceFolder}/resources/assets"
+      ],
+      "console": "internalConsole",
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Launch Client+Server",
       "type": "mono",
       "request": "launch",
       "preLaunchTask": "build (Debug)",
