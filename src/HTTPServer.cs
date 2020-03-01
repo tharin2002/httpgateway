@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Modules;
 using Unosquare.Labs.EmbedIO.Constants;
+using Vintagestory.API.Server;
 
 namespace HTTPGateway
 {
@@ -17,13 +18,14 @@ namespace HTTPGateway
       ResourcePath = Path.Combine(resourcePath, "httpgateway/");
     }
 
-    public Task RunServer()
+    public Task RunServer(ICoreServerAPI api)
     {
       WebServer = new WebServer(ServerUrl);
       WebServer.WithLocalSession();
       WebServer.RegisterModule(new StaticFilesModule(ResourcePath));
       WebServer.Module<StaticFilesModule>().UseRamCache = true;
-      WebServer.WithWebApiController<APIController>();
+      WebServer.RegisterModule(new WebApiModule());
+      WebServer.Module<WebApiModule>().RegisterController(ctx => new APIController(ctx, api));
       return WebServer.RunAsync();
     }
 
@@ -42,11 +44,13 @@ namespace HTTPGateway
   // endpoints. The class must extend WebApiController.
   public class APIController : WebApiController
   {
+    private ICoreServerAPI api;
     // You need to add a default constructor where the first argument
     // is an IHttpContext
-    public APIController(IHttpContext context)
+    public APIController(IHttpContext context, ICoreServerAPI api)
       : base(context)
     {
+      this.api = api;
     }
 
     // You need to include the WebApiHandler attribute to each method
@@ -55,9 +59,11 @@ namespace HTTPGateway
     [WebApiHandler(HttpVerbs.Get, "/api/stats")]
     public Task<bool> GetStats()
     {
+      var runPhase = api.Server.CurrentRunPhase.ToString();
+      
       try
       {
-        return this.JsonResponseAsync("{ \"response\": \"ok\" }");
+        return this.JsonResponseAsync($"{{ \"response\": \"ok\", \"run_phase\": \"{runPhase}\" }}");
       }
       catch (Exception ex)
       {
