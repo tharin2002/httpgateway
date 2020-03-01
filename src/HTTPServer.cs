@@ -14,7 +14,7 @@ namespace HTTPGateway
   public class LocalServerService: IDisposable
   {
     public string ResourcePath;
-    public string ServerUrl = "http://localhost:4200/";
+    public string ServerUrl = "http://*:4200/";
     public WebServer WebServer;
     public LocalServerService(string resourcePath)
     {
