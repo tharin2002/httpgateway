@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Client (Mono)",
+      "type": "mono",
+      "request": "launch",
+      "preLaunchTask": "build (Debug)",
+      "program": "${env:VINTAGE_STORY}/Vintagestory.exe",
+      "args": [
+        "--dataPath",
+        "/Users/anthony/dev/data",
+        "--playstyle",
+        "surviveandbuild",
+        "--openWorld",
+        "modding test world",
+        "--addOrigin",
+        "${workspaceFolder}/resources/assets"
+      ],
+      "console": "internalConsole",
+      "internalConsoleOptions": "openOnSessionStart"
+    }
+  ]
+}

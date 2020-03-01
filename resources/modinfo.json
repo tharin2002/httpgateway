@@ -1,0 +1,14 @@
+{
+  "type": "code",
+  "name": "HTTPGateway",
+  "modid": "httpgateway",
+  "version": "0.1",
+
+  "description": "Enables an HTTP interface to interact with the server.",
+  "website": "https://github.com/tharin2002/httpgateway",
+  "authors": ["Thaeryn"],
+
+  "dependencies": {
+    "game": "1.12.5"
+  }
+}
