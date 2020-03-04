@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Unosquare.Labs.EmbedIO;
@@ -34,7 +35,7 @@ namespace HTTPGateway
       };
     }
 
-    public Task RunServer(ICoreServerAPI api)
+    public Task RunServer(CancellationToken cancellationToken, ICoreServerAPI api)
     {
       WebServer = new WebServer(ServerUrl);
       WebServer.WithLocalSession();
@@ -45,8 +46,7 @@ namespace HTTPGateway
       WebServer.Module<WebApiModule>().RegisterController(ctx => new APIController(ctx, api, this.tokens, this.secret));
       WebServer.RegisterModule(new WebSocketsModule());
       WebServer.Module<WebSocketsModule>().RegisterWebSocketsServer<WSServer>("/ws/{token}");
-      
-      return WebServer.RunAsync();
+      return WebServer.RunAsync(cancellationToken);
     }
 
     public void DisposeServer()

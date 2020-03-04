@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Security.Cryptography;
 using System.Collections.Generic;
 using Vintagestory.API.Common;
@@ -17,6 +18,7 @@ namespace HTTPGateway
 {
 	public class HTTPGatewayMod : ModSystem
 	{
+		private bool disposed = false;
 		public static event EventHandler<WSMessage> SendWSMessage;
 		public static event EventHandler<ICoreServerAPI> ReferenceAPI;
 		ICoreServerAPI api;
@@ -24,6 +26,7 @@ namespace HTTPGateway
 		Dictionary<string, JWTService.JWTUser> tokens = new Dictionary<string, JWTService.JWTUser>();
 		new public bool AllowRuntimeReload = true;
 		private string secret;
+		public CancellationTokenSource cancellationToken;
 		public override bool ShouldLoad(EnumAppSide side)
 		{
 			return side == EnumAppSide.Server;
@@ -31,7 +34,18 @@ namespace HTTPGateway
 
 		public override void Dispose()
 		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposed) return;
+			this.cancellationToken.Cancel();
 			this.srv.DisposeServer();
+
+			disposed = true;
+
 		}
 
 		public override void StartServerSide(ICoreServerAPI api)
@@ -64,13 +78,14 @@ namespace HTTPGateway
 			}
 
 			var testcode = RandomString(6);
-			JWTService.JWTUser testuser = new JWTService.JWTUser { UserId = "abc123", UserName = "Anti", RoleId = "1" };
+			JWTService.JWTUser testuser = new JWTService.JWTUser { UserId = "1", UserName = "Admin", RoleId = "1" };
 			this.tokens.Add(testcode, testuser);
-			api.Server.Logger.Warning("Your code: " + testcode);
+			api.Server.Logger.Warning("Your VS Web Admin code: " + testcode);
 
 			api.Event.PlayerJoin += OnPlayerJoin;
+			this.cancellationToken = new CancellationTokenSource();
 			this.srv = new WebService(GamePaths.AssetsPath, this.tokens, this.secret);
-			this.srv.RunServer(api);
+			this.srv.RunServer(this.cancellationToken.Token, api);
 			api.Server.Logger.EntryAdded += OnServerLogEntry;
 			api.RegisterCommand("httpgateway", "Configures the HTTP Gateway mod.", "",
 				(IServerPlayer Player, int groupId, CmdArgs args) =>

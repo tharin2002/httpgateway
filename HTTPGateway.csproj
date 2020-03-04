@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net452</TargetFramework>
 	</PropertyGroup>
+	<Import Project="netfx.props" />
 	
 	<ItemGroup>
 		<Reference Include="VintagestoryAPI">
