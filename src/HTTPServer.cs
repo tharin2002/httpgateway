@@ -22,28 +22,30 @@ namespace HTTPGateway
     public WebServer WebServer;
     public ModSystem Gateway;
     public Dictionary<string, JWTService.JWTUser> tokens;
-    private string secret;
+    public string secret;
     public static event EventHandler<WebService> ReferenceWebService;
     public WebService(string resourcePath, Dictionary<string, JWTService.JWTUser> tokens, string secret)
     {
       ResourcePath = Path.Combine(resourcePath, "httpgateway/");
       this.tokens = tokens;
       this.secret = secret;
+      WSServer.WSLoaded += (s,e) => {
+        ReferenceWebService?.Invoke(null, this);
+      };
     }
 
     public Task RunServer(ICoreServerAPI api)
     {
       WebServer = new WebServer(ServerUrl);
       WebServer.WithLocalSession();
+      WebServer.EnableCors();
       WebServer.RegisterModule(new StaticFilesModule(ResourcePath));
       WebServer.Module<StaticFilesModule>().UseRamCache = true;
       WebServer.RegisterModule(new WebApiModule());
       WebServer.Module<WebApiModule>().RegisterController(ctx => new APIController(ctx, api, this.tokens, this.secret));
       WebServer.RegisterModule(new WebSocketsModule());
-      WebServer.Module<WebSocketsModule>().RegisterWebSocketsServer<WSServer>("/ws");
-      WSServer.WSLoaded += (s,e) => {
-        ReferenceWebService?.Invoke(null, this);
-      };
+      WebServer.Module<WebSocketsModule>().RegisterWebSocketsServer<WSServer>("/ws/{token}");
+      
       return WebServer.RunAsync();
     }
 
@@ -112,7 +114,7 @@ namespace HTTPGateway
     public async Task<bool> Login()
     {
       var code = this.QueryString("code");
-      if (code.Length == 6) 
+      if (code != null && code.Length == 6) 
       {
         if (this.tokens.ContainsKey(code))
         {
@@ -191,28 +193,39 @@ namespace HTTPGateway
         
     }
 
-    protected override void OnClientConnected(
+    protected override async void OnClientConnected(
       IWebSocketContext context,
       System.Net.IPEndPoint localEndPoint,
       System.Net.IPEndPoint remoteEndPoint)
     {
-      foreach(Cookie c in context.CookieCollection)
+      context.RequestRegexUrlParams("/ws/{token}").TryGetValue("token", out object token);
+
+      bool valid = false;
+      try
       {
-        if (c.Name == "_auth" && c.Value.Length == 8)
+        valid = await JWTService.Validate(token.ToString(), this.web.secret);
+      }
+      catch (Exception e)
+      {
+        this.api.Server.Logger.Warning(e.Message); 
+      }
+      if (valid)
+      {
+        var response = new IServerAPIToJSON(api.Server);
+        try
         {
-          var b64 = System.Convert.FromBase64String(c.Value);
-          var code = System.Text.Encoding.UTF8.GetString(b64);
-          if (this.web.tokens.ContainsKey(code))
-          {
-            var msg = new WSMessage("Notification", "Websocket server started.");
-            Send(context, msg.ToJSON());
-            return;
-          }
+          var msg = new WSMessage("Notification", "Websocket server started.");
+          Send(context, msg.ToJSON());
+          return;
+        }
+        catch (Exception e)
+        {
+          this.api.Server.Logger.Warning(e.Message);
         }
       }
       var err = new WSMessage("Error", "Unauthorized");
       Send(context, err.ToJSON());
-      context.WebSocket.CloseAsync();
+      await context.WebSocket.CloseAsync();
     }
 
     protected override void OnFrameReceived(IWebSocketContext context, byte[] rxBuffer, IWebSocketReceiveResult rxResult)
