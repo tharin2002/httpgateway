@@ -83,7 +83,6 @@ namespace HTTPGateway
     {
       if (this.HasRequestHeader("_auth"))
       {
-        var decodedJWT = await JWTService.ReadTokenAsync(this.RequestHeader("_auth"));
         bool valid = false;
         try
         {
@@ -106,14 +105,7 @@ namespace HTTPGateway
           }
         }
       }
-      try
-      {
-        return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 3}");
-      }
-      catch (Exception ex)
-      {
-        return await this.JsonExceptionResponseAsync(ex);
-      }
+      return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 3}");
     }
 
     [WebApiHandler(HttpVerbs.Post, "/api/login")]
