@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using Vintagestory.API.Common;
 using Vintagestory.API.Server;
 using Vintagestory.API.Config;
-using Newtonsoft.Json;
 
 [assembly: ModInfo( "HTTPGateway",
 	Description = "Enables an HTTP interface to interact with the server.",
@@ -56,18 +55,20 @@ namespace HTTPGateway
 				ReferenceAPI?.Invoke(null, this.api);
 			};
 
-			if (!File.Exists(@"httpgateway.conf"))
+			Directory.CreateDirectory(GamePaths.DataPath + "/Web");
+			const string keyFile = @"httpgateway.key";
+			if (!File.Exists(keyFile))
 			{
 				RandomNumberGenerator rng = RandomNumberGenerator.Create();
 				byte[] data = new byte[32];
 				rng.GetBytes(data);
 				this.secret = Encoding.UTF8.GetString(data, 0, data.Length);
-				using (StreamWriter sw = File.CreateText(@"httpgateway.conf"))
+				using (StreamWriter sw = File.CreateText(keyFile))
 				{
 					sw.WriteLine(this.secret);
 				}
 			} else {
-				using (StreamReader sr = File.OpenText(@"httpgateway.conf"))
+				using (StreamReader sr = File.OpenText(keyFile))
 				{
 					string s;
 					while ((s = sr.ReadLine()) != null)

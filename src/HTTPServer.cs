@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -27,7 +25,7 @@ namespace HTTPGateway
     public static event EventHandler<WebService> ReferenceWebService;
     public WebService(string resourcePath, Dictionary<string, JWTService.JWTUser> tokens, string secret)
     {
-      ResourcePath = Path.Combine(resourcePath, "httpgateway/");
+      ResourcePath = Path.Combine(resourcePath, GamePaths.DataPath + "/Web");
       this.tokens = tokens;
       this.secret = secret;
       WSServer.WSLoaded += (s,e) => {
@@ -92,7 +90,7 @@ namespace HTTPGateway
         }
         catch (Exception e)
         {
-         this.api.Server.Logger.Warning(e.ToString()); 
+         this.api.Server.Logger.Warning(e.Message); 
         }
         if (valid)
         {
