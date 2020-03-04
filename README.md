@@ -16,7 +16,7 @@ Until the game supports automatic importing of external references for mods, you
 
 ## WARNING!
 
-This mod relies on 3rd party software and opens up HTTP access to the server hosting your game. There are always security risks involved. This mod may also cause performance issues with your game under heavy load, please use caution and consider using a reverse proxy such as [NGINX] if you plan on allowing public access to the site.
+This mod relies on 3rd party software and opens up HTTP access to the server hosting your game. There are always security risks involved. This mod may also cause performance issues with your game under heavy load, please use caution and consider using a reverse proxy such as [NGINX][ng] if you plan on allowing public access to the site.
 
 ## Customization
 
@@ -27,7 +27,7 @@ The default port the server runs on is 80, enabling you to directly visit your s
 Once the mod is installed and hosting, you can visit the default site by visiting the bound address in your web browser. If you would like to develop your own site, there is a built in authentication supplying a jwt token, and several endpoints providing useful information once you are authorized. The authorization is based on a 6-character code challenge that you can generate in game with the command `/httpgateway code`.
 
 - POST`/api/login?code=<6-character-code>` returns `{ "_auth": "<jwt>" }`
-- GET`/api/server` with header: `_auth`=`<jwt>` returns `<JSON of IServerAPI>`
+- GET`/api/server` with header: `_auth`=`<jwt>` returns `<JSON of IServerAPI>` [IServerAPI][isrv]
 - ws://`/ws/<jwt>` opens websocket connection which streams server logs in format: `{ "type": <logType>, "data": <logMessage> }`
 
 ## Todo
@@ -43,3 +43,8 @@ Once the mod is installed and hosting, you can visit the default site by visitin
 - Full server management (over websocket and endpoint)
 - Role based permissions (only admin for now)
 - Reverse proxy support
+
+[vs]: https://www.vintagestory.at/
+[eio]: https://github.com/unosquare/embedio
+[ng]: https://www.nginx.com/
+[isrv]: http://apidocs.vintagestory.at/api/Vintagestory.API.Server.IServerAPI.html
