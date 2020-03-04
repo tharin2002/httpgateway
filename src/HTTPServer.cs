@@ -11,31 +11,53 @@ using Vintagestory.API.Config;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace HTTPGateway
 {
   public class WebService: IDisposable
   {
     public string ResourcePath;
-    public string ServerUrl = "http://*:4200/";
+    public string ServerUrl = "http://*";
     public WebServer WebServer;
     public ModSystem Gateway;
     public Dictionary<string, JWTService.JWTUser> tokens;
     public string secret;
+    private string port = "80";
+    public ICoreServerAPI api;
     public static event EventHandler<WebService> ReferenceWebService;
-    public WebService(string resourcePath, Dictionary<string, JWTService.JWTUser> tokens, string secret)
+    public WebService(string resourcePath, ICoreServerAPI api, Dictionary<string, JWTService.JWTUser> tokens, string secret)
     {
       ResourcePath = Path.Combine(resourcePath, GamePaths.DataPath + "/Web");
+      this.api = api;
       this.tokens = tokens;
       this.secret = secret;
       WSServer.WSLoaded += (s,e) => {
         ReferenceWebService?.Invoke(null, this);
       };
+      const string keyFile = @"httpgateway-port.txt";
+      if (!File.Exists(keyFile))
+			{
+				using (StreamWriter sw = File.CreateText(keyFile))
+				{
+					sw.WriteLine("80");
+				}
+			} else {
+				using (StreamReader sr = File.OpenText(keyFile))
+				{
+          this.port = sr.ReadLine().Trim();
+          if (!IsPort(this.port))
+          {
+            this.api.Server.Logger.Error("Invalid port in httpgateway-port.txt, falling back to port 80");
+            this.port = "80";
+          }
+				}
+			}
     }
 
     public Task RunServer(CancellationToken cancellationToken, ICoreServerAPI api)
     {
-      WebServer = new WebServer(ServerUrl);
+      WebServer = new WebServer(ServerUrl + ":" + port);
       WebServer.WithLocalSession();
       WebServer.EnableCors();
       WebServer.RegisterModule(new StaticFilesModule(ResourcePath));
@@ -55,6 +77,28 @@ namespace HTTPGateway
     public void Dispose()
     {
 
+    }
+
+    public static bool IsPort(string value)
+    {
+      if (string.IsNullOrEmpty(value))
+        return false;
+
+      Regex numeric = new Regex(@"^[0-9]+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+      if (numeric.IsMatch(value))
+      {
+        try
+        {
+          if (Convert.ToInt32(value) < 65536)
+            return true;
+        }
+        catch (OverflowException)
+        {
+        }
+      }
+
+      return false;
     }
   }
 

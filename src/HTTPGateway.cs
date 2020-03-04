@@ -83,9 +83,8 @@ namespace HTTPGateway
 			this.tokens.Add(testcode, testuser);
 			api.Server.Logger.Warning("Your VS Web Admin code: " + testcode);
 
-			api.Event.PlayerJoin += OnPlayerJoin;
 			this.cancellationToken = new CancellationTokenSource();
-			this.srv = new WebService(GamePaths.AssetsPath, this.tokens, this.secret);
+			this.srv = new WebService(GamePaths.AssetsPath, this.api, this.tokens, this.secret);
 			this.srv.RunServer(this.cancellationToken.Token, api);
 			api.Server.Logger.EntryAdded += OnServerLogEntry;
 			api.RegisterCommand("httpgateway", "Configures the HTTP Gateway mod.", "",
@@ -117,11 +116,6 @@ namespace HTTPGateway
 					}
 					
 				}, Privilege.controlserver);
-		}
-
-		private void OnPlayerJoin(IServerPlayer byPlayer)
-		{
-			byPlayer.SendMessage(GlobalConstants.GeneralChatGroup, "HTTPGateway v0.1 Loaded!", EnumChatType.Notification);
 		}
 
 		private void OnServerLogEntry(EnumLogType logType, string message, object[] args)
