@@ -12,6 +12,7 @@ using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using System.Net;
 
 namespace HTTPGateway
 {
@@ -128,28 +129,14 @@ namespace HTTPGateway
       if (this.HasRequestHeader("_auth"))
       {
         bool valid = false;
-        try
-        {
-          valid = await JWTService.Validate(this.RequestHeader("_auth"), this.secret);
-        }
-        catch (Exception e)
-        {
-         this.api.Server.Logger.Warning(e.Message); 
-        }
+        valid = await JWTService.Validate(this.RequestHeader("_auth"), this.secret);
         if (valid)
         {
           var response = new IServerAPIToJSON(api.Server);
-          try
-          {
-            return await this.JsonResponseAsync(JsonConvert.SerializeObject(response));
-          }
-          catch (Exception ex)
-          {
-            return await this.JsonExceptionResponseAsync(ex);
-          }
+          return await this.JsonResponseAsync(JsonConvert.SerializeObject(response));
         }
       }
-      return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 3}");
+      return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 3}"); // Try setting status to ok to clear up warnings
     }
 
     [WebApiHandler(HttpVerbs.Post, "/api/login")]
@@ -168,7 +155,8 @@ namespace HTTPGateway
           }
           catch (Exception ex)
           {
-            return await this.JsonExceptionResponseAsync(ex);
+            this.api.Server.Logger.Debug(ex.Message);
+            return await this.JsonResponseAsync("{}");
           }
         }
       }
@@ -178,7 +166,8 @@ namespace HTTPGateway
       }
       catch (Exception ex)
       {
-        return await this.JsonExceptionResponseAsync(ex);
+        this.api.Server.Logger.Debug(ex.Message);
+        return await this.JsonResponseAsync("{}");
       }
     }
 
@@ -191,7 +180,8 @@ namespace HTTPGateway
       }
       catch (Exception ex)
       {
-        return await this.JsonExceptionResponseAsync(ex);
+        this.api.Server.Logger.Debug(ex.Message);
+        return await this.JsonResponseAsync("{}");
       }
     }
     

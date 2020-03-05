@@ -25,7 +25,8 @@ namespace HTTPGateway
 		Dictionary<string, JWTService.JWTUser> tokens = new Dictionary<string, JWTService.JWTUser>();
 		new public bool AllowRuntimeReload = true;
 		private string secret;
-		public CancellationTokenSource cancellationToken;
+		public CancellationTokenSource CTS;
+		public CancellationToken cancellationToken;
 		public override bool ShouldLoad(EnumAppSide side)
 		{
 			return side == EnumAppSide.Server;
@@ -40,11 +41,8 @@ namespace HTTPGateway
 		protected virtual void Dispose(bool disposing)
 		{
 			if (disposed) return;
-			this.cancellationToken.Cancel();
-			this.srv.DisposeServer();
 
 			disposed = true;
-
 		}
 
 		public override void StartServerSide(ICoreServerAPI api)
@@ -83,9 +81,19 @@ namespace HTTPGateway
 			this.tokens.Add(testcode, testuser);
 			api.Server.Logger.Warning("Your VS Web Admin code: " + testcode);
 
-			this.cancellationToken = new CancellationTokenSource();
+			this.CTS = new CancellationTokenSource();
+			this.cancellationToken = CTS.Token;
 			this.srv = new WebService(GamePaths.AssetsPath, this.api, this.tokens, this.secret);
-			this.srv.RunServer(this.cancellationToken.Token, api);
+			this.srv.RunServer(this.cancellationToken, api);
+
+			api.Event.GameWorldSave += () =>
+			{
+				if (api.Server.IsShuttingDown)
+				{
+					this.CTS.Cancel();
+					this.CTS.Dispose();
+				}
+			};
 			api.Server.Logger.EntryAdded += OnServerLogEntry;
 			api.RegisterCommand("httpgateway", "Configures the HTTP Gateway mod.", "",
 				(IServerPlayer Player, int groupId, CmdArgs args) =>
