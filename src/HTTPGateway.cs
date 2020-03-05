@@ -57,7 +57,7 @@ namespace HTTPGateway
 
 			Directory.CreateDirectory(GamePaths.DataPath + "/Web");
 			const string keyFile = @"httpgateway.key";
-			if (!File.Exists(keyFile))
+			if (!File.Exists(keyFile))	
 			{
 				RandomNumberGenerator rng = RandomNumberGenerator.Create();
 				byte[] data = new byte[32];

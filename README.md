@@ -30,6 +30,10 @@ Once the mod is installed and hosting, you can visit the default site by visitin
 - GET`/api/server` with header: `_auth`=`<jwt>` returns `<JSON of IServerAPI>` [IServerAPI][isrv]
 - ws://`/ws/<jwt>` opens websocket connection which streams server logs in format: `{ "type": <logType>, "data": <logMessage> }`
 
+The JWT secret is generated on first run and saved in the file `httpgateway.key`.  If you would like to revoke all token's access, just delete this file and the server will generate another.
+
+A 6 character challenge code is automatically generated on startup and displayed in the server logs.  This can allow you to gain access without using the game client if needed.
+
 ## Todo
 
 - Fetch existing logs on ServerLogs connect

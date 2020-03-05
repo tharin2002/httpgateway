@@ -2,7 +2,7 @@
   "type": "code",
   "name": "HTTPGateway",
   "modid": "httpgateway",
-  "version": "0.1",
+  "version": "1.0.0-rc.2",
 
   "description": "Enables an HTTP interface to interact with the server.",
   "website": "https://github.com/tharin2002/httpgateway",
