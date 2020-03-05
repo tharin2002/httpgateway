@@ -149,44 +149,17 @@ namespace HTTPGateway
         {
           var jwt = new JWTService();
           await jwt.Generate(this.tokens[code], this.secret);
-          try
-          {
-            return await this.JsonResponseAsync("{ \"_auth\": \""+jwt.jwt+"\"}");
-          }
-          catch (Exception ex)
-          {
-            this.api.Server.Logger.Debug(ex.Message);
-            return await this.JsonResponseAsync("{}");
-          }
+          return await this.JsonResponseAsync("{ \"_auth\": \""+jwt.jwt+"\"}");
         }
       }
-      try
-      {
-        return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 2}");
-      }
-      catch (Exception ex)
-      {
-        this.api.Server.Logger.Debug(ex.Message);
-        return await this.JsonResponseAsync("{}");
-      }
+      return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 2}");
     }
 
     [WebApiHandler(HttpVerbs.Get, "/api/login")]
     public async Task<bool> GetLogin()
     {
-      try
-      {
-        return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 4}");
-      }
-      catch (Exception ex)
-      {
-        this.api.Server.Logger.Debug(ex.Message);
-        return await this.JsonResponseAsync("{}");
-      }
+      return await this.JsonResponseAsync("{\"error\": \"Unauthorized\", \"code\": 4}");
     }
-    
-    // You can override the default headers and add custom headers to each API Response.
-    //public override void SetDefaultHeaders() => HttpContext.NoCache();
   }
 
   /// <summary>
@@ -244,16 +217,9 @@ namespace HTTPGateway
       if (valid)
       {
         var response = new IServerAPIToJSON(api.Server);
-        try
-        {
-          var msg = new WSMessage("Notification", "Websocket server started.");
-          Send(context, msg.ToJSON());
-          return;
-        }
-        catch (Exception e)
-        {
-          this.api.Server.Logger.Warning(e.Message);
-        }
+        var msg = new WSMessage("Notification", "Websocket server started.");
+        Send(context, msg.ToJSON());
+        return;
       }
       var err = new WSMessage("Error", "Unauthorized");
       Send(context, err.ToJSON());
@@ -339,19 +305,36 @@ namespace HTTPGateway
     public FuzzyEntityPos SpawnPosition;
     public IServerPlayerToJSON(IServerPlayer Player)
     {
-      CurrentChunkSentRadius = Player.CurrentChunkSentRadius;
-      Role = Player.Role;
-      ServerData = Player.ServerData;
-      Ping = Player.Ping;
-      LanguageCode = Player.LanguageCode;
-      IpAddress = Player.IpAddress;
-      ConnectionState = Player.ConnectionState.ToString();
-      Groups = new PlayerGroupMembership[Player.Groups.Length];
-      for(var i = 0; i < Player.Groups.Length; i++)
+      if (Player.ConnectionState >= EnumClientState.Connecting)
       {
-        Groups[i] = Player.Groups[i];
+        CurrentChunkSentRadius = Player.CurrentChunkSentRadius;
+        Role = Player.Role;
+        ServerData = Player.ServerData;
+        Ping = Player.Ping;
+        LanguageCode = Player.LanguageCode;
+        IpAddress = Player.IpAddress;
+        ConnectionState = Player.ConnectionState.ToString();
+        Groups = new PlayerGroupMembership[Player.Groups.Length];
+        for(var i = 0; i < Player.Groups.Length; i++)
+        {
+          Groups[i] = Player.Groups[i];
+        }
+        SpawnPosition = Player.SpawnPosition;
+      } else {
+        CurrentChunkSentRadius = 0;
+        Role = Player.Role;
+        ServerData = Player.ServerData;
+        Ping = 0;
+        LanguageCode = Player.LanguageCode;
+        IpAddress = "";
+        ConnectionState = Player.ConnectionState.ToString();
+        Groups = new PlayerGroupMembership[Player.Groups.Length];
+        for(var i = 0; i < Player.Groups.Length; i++)
+        {
+          Groups[i] = Player.Groups[i];
+        }
+        SpawnPosition = Player.SpawnPosition;
       }
-      SpawnPosition = Player.SpawnPosition;
     }
   }
 }
